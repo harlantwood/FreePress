@@ -1,4 +1,5 @@
 source :rubygems
 
-gem 'thor'
 gem 'json'
+gem 'maruku'
+gem 'thor'

@@ -1,57 +1,64 @@
+# FreePress
+#
+#
+
+require 'json'
 require 'net/http'
+require 'maruku'
 require 'yaml'
 
-class SDP < Thor
+class FP < Thor
     desc :up, 'publish'
 
-    CONFIG_FILE_NAME = "selfdotpublish.yml"
-    DEFAULT_SFW_PAGE = { 'title' => name, 'story' => [] }
+    CONFIG_FILE_NAME = File.join `echo $HOME`.strip, ".freepress.config"
+    DEFAULT_SFW_PAGE = {'story' => []}
 
     def up
-        p config = YAML::load(IO.read(CONFIG_FILE_NAME))
+        config = YAML::load(IO.read(CONFIG_FILE_NAME))
+        collection_path = config['collection_path']
         p 111, collections = config['collections']
-        p 222, collection_path = config['collection_path']
         collections.each do |collection|
-            page_pattern = File.join(collection_path, collection, '*', 'index.md')
-            pages = Dir[page_pattern]
-            pages.each do |page|       # /Users/harlan/
+            page_pattern = File.join collection_path, collection, '*', 'index.md'
+            p page_pattern
+            p pages = Dir[page_pattern]
+            pages.each do |page|
                 markdown = IO.read(page)
                 chunks = markdown.split(/(\s*\n){2,}/)
                 sfw_page_data = DEFAULT_SFW_PAGE.dup
-                sfw_page_data[:title] = YAML.read(chunks.shift)[:title]
+                p 333, yaml = chunks.shift
+                sfw_page_data['title'] = YAML::load(yaml)['title']
                 chunks.each do |chunk|
                     sfw_page_data['story'] << ({
                         'type' => 'paragraph',
                         'id' => RandomId.generate,
-                        'text' => md2html(chunk)
+                        'text' => Maruku.new(chunk).to_html
                     })
                 end
                 action = {
-                    'type' => 'create', 
-                    'id'   => RandomId.generate, 
-                    'item' => {'title' => page}
+                    'type' => 'create',
+                    'id' => RandomId.generate,
+                    'item' => sfw_page_data.merge({'title' => page})
                 }
-                
-                server = "harlan-knight.#{collection.split('.')[0]}.sfw.remixfreeip.org"
-                uri = URI("http://#{server}/page/#{page}/action")
-                res = Net::HTTP.post_form(uri, :action => JSON.pretty_generate(sfw_page_data))
-                
-                # put "/page/#{page}/action", :action => JSON.pretty_generate(sfw_page_data)"
+
+                subdomain = "harlan-knight.#{collection.split('.')[0]}"
+                p 555, server = "#{subdomain}.sfw.remixfreeip.org"
+                connection = Net::HTTP.new(server)
+                p 666, action_path = "/page/#{page}/action"
+                #request = Net::HTTP::Put.new action_path
+                #request.set_form_data :action => JSON.pretty_generate(sfw_page_data)
+                #response = connection.request(request)
+                #p 444, response
+
+
+                #connection = Net::HTTP.new("api.restsite.com")
+                #request = Net::HTTP::Put.new("/users/1")
+                #request.set_form_data({"users[login]" => "changed"})
+                #response = connection.request(request)
+
             end
         end
     end
 end
-
-# selfdotpublish.yml
-# collections_path: /Users/harlan/HKB/Nodes
-# collections: 
-#       - enlightenedstructure.org
-#       - The_Project
-# 
-# targets
-#   - smallest_federated_wiki
-#       - sfw.remixfreeip.org
-# 
 
 module RandomId
     def self.generate
