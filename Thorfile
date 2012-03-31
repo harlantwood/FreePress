@@ -17,6 +17,8 @@ class FP < Thor
         config = YAML::load(IO.read(CONFIG_FILE_NAME))
         collection_path = config['collection_path']
         p 111, collections = config['collections']
+        p 888, sfw_servers = config['targets']['smallest_federated_wiki']
+
         collections.each do |collection|
             page_pattern = File.join collection_path, collection, '*', 'index.md'
             p page_pattern
@@ -41,13 +43,15 @@ class FP < Thor
                 }
 
                 subdomain = "harlan-knight.#{collection.split('.')[0]}"
-                p 555, server = "#{subdomain}.sfw.remixfreeip.org"
-                connection = Net::HTTP.new(server)
                 p 666, action_path = "/page/#{page}/action"
-                #request = Net::HTTP::Put.new action_path
-                #request.set_form_data :action => JSON.pretty_generate(sfw_page_data)
-                #response = connection.request(request)
-                #p 444, response
+
+                sfw_servers.each do |sfw_server|
+                    p 555, host = "#{subdomain}.#{sfw_server}"
+                    connection = Net::HTTP.new(host)
+                    request = Net::HTTP::Put.new action_path
+                    request.set_form_data :action => JSON.pretty_generate(sfw_page_data)
+                    response = connection.request(request)
+                    p 444, response
 
 
                 #connection = Net::HTTP.new("api.restsite.com")

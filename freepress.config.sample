@@ -3,7 +3,7 @@
 #
 # format: text/yaml
 #
-# <3 FreePress.cc
+# <3 freepress.cc
 #
 
 collection_path: "/full/path/to/my/collections/parent/directory"
@@ -11,8 +11,7 @@ collections:
   - Solar_Deserts_Now
   - The_Project
 
-#targets:
-#   - smallest_federated_wiki:
-#       - fed.wiki.org
-
-
+targets:
+   - smallest_federated_wiki:
+       - localhost:1111
+       - fed.wiki.org
