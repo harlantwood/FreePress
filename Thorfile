@@ -1,11 +1,14 @@
 # FreePress
 #
-#
+# usage: bundle exec thor fp:up
 
+require 'awesome_print'
 require 'json'
 require 'net/http'
 require 'maruku'
 require 'yaml'
+
+Dir[File.expand_path("lib/ruby_extensions/*", File.dirname(__FILE__))].each{ |lib| require lib }
 
 class FP < Thor
   desc :up, 'publish'
@@ -16,48 +19,55 @@ class FP < Thor
   def up
     config = YAML::load(IO.read(CONFIG_FILE_NAME))
     collection_path = config['collection_path']
-    p 111, collections = config['collections']
-    p 888, sfw_servers = config['targets']['smallest_federated_wiki']
+    collections = config['collections']
+    sfw_servers = config['targets']['smallest_federated_wiki']
+    username = config['username']
 
     collections.each do |collection|
       page_pattern = File.join collection_path, collection, '*', 'index.md'
-      p page_pattern
-      p pages = Dir[page_pattern]
-      pages.each do |page|
-        markdown = IO.read(page)
-        chunks = markdown.split(/(\s*\n){2,}/)
+      page_pattern
+      pages = Dir[page_pattern]
+      pages.each do |page_path|
+        markdown = IO.read(page_path).rstrip_lines!
+        chunks = markdown.strip.split(/\n{2,}/)
         sfw_page_data = DEFAULT_SFW_PAGE.dup
-        p 333, yaml = chunks.shift
+        yaml = chunks.shift
         sfw_page_data['title'] = YAML::load(yaml)['title']
+
+        # if the last markdown chunk is anchor tag definitions, eg:
+        # [BaseParadigm]: /BaseParadigm
+        # [Bitcask]: http://downloads.basho.com/papers/bitcask-intro.pdf
+        # ...then store this chunk as link definitions, not as a markdown chunk
+        link_defs = chunks.pop if chunks.last.match /(\[.+\]:\s+\S+\s*\n?)+/
+
         chunks.each do |chunk|
+          chunk << "\n\n#{link_defs}" if link_defs
           sfw_page_data['story'] << ({
             'type' => 'paragraph',
             'id' => RandomId.generate,
             'text' => Maruku.new(chunk).to_html
           })
         end
+
         action = {
           'type' => 'create',
           'id' => RandomId.generate,
-          'item' => sfw_page_data.merge({'title' => page})
+          'item' => sfw_page_data
         }
 
-        subdomain = "harlan-knight.#{collection.split('.')[0]}"
-        p 666, action_path = "/page/#{page}/action"
+        subdomain = "#{collection.split('.').first}.#{username}"
+        page_file_name = File.dirname(page_path).split('/').last.parameterize
+        action_path = "/page/#{page_file_name}/action"
 
         sfw_servers.each do |sfw_server|
-          p 555, host = "#{subdomain}.#{sfw_server}"
-          connection = Net::HTTP.new(host)
+          server, port = sfw_server.split(':')
+          port = ( port || 80 ).to_i
+          host = "#{subdomain}.#{server}"
+          connection = Net::HTTP.new(host, port)
           request = Net::HTTP::Put.new action_path
-          request.set_form_data :action => JSON.pretty_generate(sfw_page_data)
+          request.set_form_data 'action' => action.to_json # JSON.pretty_generate(action)
           response = connection.request(request)
-          p 444, response
-
-
-          #connection = Net::HTTP.new("api.restsite.com")
-          #request = Net::HTTP::Put.new("/users/1")
-          #request.set_form_data({"users[login]" => "changed"})
-          #response = connection.request(request)
+          raise( response.inspect ) unless response.code == '200'
         end
 
       end

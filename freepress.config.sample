@@ -1,9 +1,9 @@
 # Customize this file with your
 # Copy this file to ~/.freepress.config
 #
-# format: text/yaml
-#
 # <3 freepress.cc
+#
+# format: text/yaml
 #
 
 collection_path: "/full/path/to/my/collections/parent/directory"
@@ -15,3 +15,6 @@ targets:
    - smallest_federated_wiki:
        - localhost:1111
        - fed.wiki.org
+
+username: john-smith
+
