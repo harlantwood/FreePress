@@ -1,6 +1,7 @@
 # FreePress
 
-Uploads collections of pages written in markdown for Jekyll to Smallest Federated Wiki instance(s).
+Uploads collections of pages written in markdown to Smallest Federated Wiki instance(s).
+Compatible with Jekyll YAML headers.
 
 ## Set up config file
 
