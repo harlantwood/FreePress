@@ -5,7 +5,10 @@ Compatible with Jekyll YAML headers.
 
 *Status*: Experimental!  Not fully baked. 
 
-*Known issues*: Will only upload pages once.  If a page by that name already exists, the script will crash.
+*Known issues*: Will only upload pages once.
+If a page by that name already exists,
+the script will warn you of a conflict,
+but will not overwrite the existing page.
 
 ## Set up config file
 

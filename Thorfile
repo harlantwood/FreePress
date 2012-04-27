@@ -61,12 +61,12 @@ class FP < Thor
           port = ( port || 80 ).to_i
           host = "#{subdomain}.#{server}"
           #puts create_action_json
-          #puts "-- PUT #{host}:#{port}#{action_path}"
+          puts "-- PUT #{host}:#{port}#{action_path}"
           connection = Net::HTTP.new(host, port)
           request = Net::HTTP::Put.new( action_path )
           request.set_form_data 'action' => create_action_json
           response = connection.request(request)
-          raise( response.inspect ) unless response.code == '200'
+          puts "Warning: #{response}" unless response.code == '200'
 
           # TODO switch to rest-client gem:
           # require 'rest_client'
