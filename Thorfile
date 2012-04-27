@@ -9,7 +9,7 @@ Dir[File.expand_path("lib/**/*.rb", File.dirname(__FILE__))].each{ |lib| require
 class FP < Thor
   desc :up, 'publish'
 
-  CONFIG_FILE_NAME = File.join `echo $HOME`.strip, ".freepress.config"
+  CONFIG_FILE_NAME = File.expand_path ".freepress.config", File.dirname(__FILE__)
   FRESH_SFW_PAGE_CREATOR = lambda { {'story' => []} }
 
   def up
